@@ -281,7 +281,9 @@ model = qat_quantizer.prepare(model)
 # ...
 ```
 
-Recalling our example, we have replaced the `torch.nn.Linear` layers with our own custom implementation. This is done by the `qat_quantizer.prepare(model)` function. This function inserts the `FakeQuantizeFunction` into the linear layers, and replaces the original weights with the quantized weights. However, in case of inference, we do not want to do these steps, we would like to only dequantize the weights and compute, as the weights are already quantized when loaded from memory. We haven't implemented this in our example, but ` AO` provides a `qat_quantizer.convert(model)` function, which does this for us. To do this, we can use the following code:
+Recalling our example, we have replaced the `torch.nn.Linear` layers with our own custom implementation. Equivalent of this is done by the `qat_quantizer.prepare(model)` method. This method inserts the `FakeQuantizeFunction` into the linear layers, and replaces the weights in the matrix multiplication with the quantized weights.
+
+However, in case of inference, we do not want to do these steps. We would like to only dequantize the weights and do the computation, as the weights are already quantized when loaded from memory. We haven't implemented this in our example, as its not relevant to the concept, but is required in production setting. `AO` provides a `qat_quantizer.convert(model)` method, which does this for us. We can use the following code to achieve this:
 
 ```python
 # Convert the model to the quantized model
@@ -294,7 +296,7 @@ model = qat_quantizer.convert(model)
 ## Tips and Tricks
 
 - **Finetuning:** finetuning the model with `QAT` is usually a better approach then training the model from scratch.
-- **Layers:** quantizing only some layers is a good approach, some layers are influenced more by the quantization process. Try experimenting with replacing only some layers. Good starting point is replacing the later layers. Also, in general it's not a good approach to quantize critical layers, such as attention layers. A good approach is to quantize the feed-forward layers, as those are the ones that require the most memory.
+- **Layers:** quantizing only some layers is a good approach, some layers are influenced more by the quantization process. Try experimenting with replacing only some layers. Replacing the later layers is usually better than replacing the earlier layers. Also, in general it's not a good approach to quantize critical layers, such as attention. A good approach is to quantize the feed-forward layers, as those are the ones that require the most memory.
 
 ## Conclusion
 
