@@ -20,7 +20,7 @@ Formally, quantization is the process of constraining an input from a continuous
 
 Now, that we have a basic understanding on why quantization is important, let's take a look at how quantization works. 
 
-***Important*** To simplify things, we will only be looking at quantization to a lower precision data type, that exists in the PyTorch framework, to avoid hassles of binary operations. That is going from `torch.float16` to `torch.int8`, also we will be considering a method called `Linear Quantization`.
+***Important*** To simplify things, we will only be looking at quantization to a lower precision data type, that exists in the PyTorch framework, to avoid hassles of binary operations. That is, from `torch.float16` to `torch.int8`. Also, we will be considering a method called `Linear Quantization`. This is the most common method of quantization.
 
 ### How does Quantization work?
 If we think of `int8` as a data type, it can store values in the range of `[-128, 127]`. However, our weights and activations in `float16` have a range of `[-65504, 65504]`. Also, this range in `float16` is not uniformly distributed, therefore accommodating a lot more possible values. To quantize the weights and activations, we need to map the values in `float16` to the range of `int8`. This can be done by the following steps:
@@ -61,7 +61,7 @@ $$
 Z = \text{round}\left(Q_{min} - \frac{W_{min}}{S}\right) = \text{round}\left(-128 - \frac{W_{min}}{S}\right)
 $$
 
-###  Implementation
+##  Implementation
 
 ```python
 import torch
@@ -96,7 +96,7 @@ def dequantize_tensor(q_tensor: QTensor) -> torch.Tensor:
 ```
 
 ### Clipping
-You might have noticed, we lose quite a lot of information while quantizing the tensor. This might lead to a precision loss, which can be detrimental to the performance of the model. Imagine a scenario where our input tensor distribution looks like the following:
+You might have noticed that we lose quite a lot of information while quantizing the tensor. This might lead to a precision loss, which can be detrimental to the performance of the model. Imagine a scenario where our input tensor distribution looks like the following:
 
 ![Input Distribution](./media/Outliers.png)
 *Figure 3: A pretty common distribution of weights, where most of the values are centered around 0.0.*
