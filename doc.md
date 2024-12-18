@@ -132,19 +132,19 @@ This is the only required change to the implementation. In this implementation, 
 
 ### Quantization Granularity
 
-Another method to improve the performance of the quantized model is called `Quantization Granularity`. With the above implementation, we are computing the scale and zero point for the entire tensor. We could improve on this, by computing these values for a sub-part of the tensor. There are different variants of tensor splitting, such as `Per Channel`, `Per Token`, etc. The only difference between these variants is across which dimension is the zero point and scale computed. This can further lead to a better performance of the model, with cost of only a few extra bytes stored in memory. To save time and space, we will not be implementing these methods from scratch here, but just have this in mind when existing quantization schemes are shown.
+Another method to improve the performance of the quantized model is called `Quantization Granularity`. With the above implementation, we are computing the scale and zero point for the entire tensor. We could improve on this, by computing these values for a sub-part of the tensor. There are different variants of tensor splitting, such as `Per Channel`, `Per Token`, etc. The only difference between these variants is across which dimension is the zero point and scale computed. This can further lead to a better performance of the model, with cost of only a few extra bytes in memory. To save time and space, we will not be implementing these methods from scratch here, but just have this in mind when currently used quantization schemes are shown.
 
 ## Quantization Aware Training 
 
-With this out of the way, we can finally take a look at the concept of Quantization Aware Training. To further improve the performance of the quantized model at inference time, we can use the concept of Quantization Aware Training. This method involves making the model *used to* quantized weights, activations respectively. This involves training or fine-tuning the model with something called `Fake Quantization`. This is a method to simulate the quantization process during training. This is accomplished by doing the following:
+With this out of the way, we can finally take a look at the concept of `Quantization Aware Training`. To further improve the performance of the quantized model at inference time, we can use the concept of Quantization Aware Training. This method involves making the model *used to* quantized weights, activations respectively. This involves training or fine-tuning the model with something called `Fake Quantization`. This is a method to simulate the quantization process during training. This is accomplished by doing the following:
 
 - Original weights are stored in the original data type, such as `float16`.
 - Computation is done in the original data type.
-- After we load the weights, we quantize them and then dequantize, to simulate the loading of integer weights and their dequantization done during the inference.
-- The activations of the previous layer can be quantized and then dequantized back to get the values that the model would be using during the inference. This depends whether we're doing both activation and weight quantization, or only weight quantization.
-- We then backpropagate the error w.r.t. the dequantized weights, and update the original weights.
+- After we load the weights, we quantize them and then dequantize back. This is done to simulate the loading of integer weights and their dequantization done during the inference.
+- The activations of the previous layer can be quantized, then dequantized back to get the values that the model would be using during the inference. This depends whether we're doing both activation and weight quantization, or only weight quantization.
+- We then backpropagate the gradient w.r.t. the dequantized weights, and update the original weights.
 
-You might be wondering, why do we compute with the dequantized weights, but update the original weights? If you remember our implementation, to dequantize the tensor, we round the values to the nearest integer. This means that if the gradient w.r.t. the dequantized weights is used to update the dequantized weights, the change could be too small to be further visible in the integer representation, therefore we would lose the update information. We can think of this as *passing* the gradient to the original weights. This is called `STE` or Straight Through Estimator. 
+You might be wondering, why do we compute with the dequantized weights, but update the original weights? If you remember our implementation, to dequantize the tensor, we round the values to the nearest integer. This means that if the gradient w.r.t. the dequantized weights is used to update the dequantized weights, the change could be too small to be further visible in the integer representation, therefore we would lose the update information. We can think of this as *passing* the gradient to the original weights. This is called `STE` or `Straight Through Estimator`. 
 
 It's easier to see this in a diagram:
 
@@ -230,7 +230,7 @@ def replace_layers_with_quantized(model: torch.nn.Module) -> torch.nn.Module:
     return model
 ```
 
-Now, we can create our own model and use this utility function to do quantization aware training.
+Now, we can create our own model and use this utility function to do `QAT`.
 
 ```python
 model = torch.nn.Sequential(
@@ -247,9 +247,9 @@ model = replace_layers_with_quantized(model)
 
 ## How to do this in practice?
 
-As you might have noticed, we have written quite a lot of code, which doesn't handle a lot of edge cases and is rather simple. We can use PyTorch's [AO](https://github.com/pytorch/ao) library to do this for us. This library provides a [QAT](https://github.com/pytorch/ao/tree/main/torchao/quantization/qat) module, which provides functionality to do this for us.
+As you might have noticed, we have written quite a lot of code, which doesn't handle a lot of edge cases and is rather simple. We can use PyTorch's [AO](https://github.com/pytorch/ao) library to do this for us. This library provides a [QAT](https://github.com/pytorch/ao/tree/main/torchao/quantization/qat) module, which provides functionality for different quantization schemes.
 
-The examples shown were purely educational, and in production, different quantization schemes are used to improve the performance of the model.
+The examples shown were purely educational. In production, different quantization schemes are used to improve the performance of the model.
 ` AO` currently provides 2 different quantization schemes (note the different granularities of quantization, as discussed in the [Quantization Granularity](#quantization-granularity) section), which are:
 1) **int8 per token dynamic activation quantization with int4 per group weight quantization:**
     This method quantizes weights to `int8` and activations to `int4`. Then, computation is done in original data type, that is `float16` usually. This is a good starting point for quantization aware training.
@@ -283,10 +283,11 @@ model = qat_quantizer.prepare(model)
 
 Recalling our example, we have replaced the `torch.nn.Linear` layers with our own custom implementation. Equivalent of this is done by the `qat_quantizer.prepare(model)` method. This method inserts the `FakeQuantizeFunction` into the linear layers, and replaces the weights in the matrix multiplication with the quantized weights.
 
-However, in case of inference, we do not want to do these steps. We would like to only dequantize the weights and do the computation, as the weights are already quantized when loaded from memory. We haven't implemented this in our example, as its not relevant to the concept, but is required in production setting. `AO` provides a `qat_quantizer.convert(model)` method, which does this for us. We can use the following code to achieve this:
+However, in case of inference, we do not want to do these steps. We only need to dequantize the weights and do the computation, as the weights are already quantized when loaded from memory. We haven't implemented this in our example, as its not relevant to the concept, but is required in production setting. `AO` provides a `qat_quantizer.convert(model)` method, which does this for us. We can use the following code to achieve this:
 
 ```python
 # Convert the model to the quantized model
+# This replaces all the "fake quantize" operations with the actual quantize operations
 model = qat_quantizer.convert(model)
 
 # Now we can use the model for inference
