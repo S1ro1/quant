@@ -252,10 +252,10 @@ As you might have noticed, we have written quite a lot of code, which doesn't ha
 The examples shown were purely educational, and in production, different quantization schemes are used to improve the performance of the model.
 ` AO` currently provides 2 different quantization schemes (note the different granularities of quantization, as discussed in the [Quantization Granularity](#quantization-granularity) section), which are:
 1) **int8 per token dynamic activation quantization with int4 per group weight quantization:**
-    This quantization quantizes weights to `int8` and activations to `int4`. Then, computation is done in original data type, that is `float16` usually. This is a good starting point for quantization aware training.
+    This method quantizes weights to `int8` and activations to `int4`. Then, computation is done in original data type, that is `float16` usually. This is a good starting point for quantization aware training.
 
 2) **int4 per group weight quantization:**
-    This quantization quantizes weights to `int4`, but keeps the activations in `float16`. Then, weights are dequantized `on the fly` during the `matmul` kernel call. This is just to optimize the latency and performance of the model.
+    This method quantizes weights to `int4`, but keeps the activations in `float16`. Then, weights are dequantized `on the fly` during the `matmul` kernel call. This is just to optimize the latency and performance of the model.
 
 
 To reproduce our example with ` AO`, you can use the following code:
