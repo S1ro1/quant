@@ -1,7 +1,7 @@
 # Quatization Aware Training
 
 In this tutorial, we will be looking at the concept of quantization aware training, how does it work in depth, its benefits and how to implement it in PyTorch. To properly understand
-this concept, proper understanding of the concept of quantization is required.
+this concept, proper understanding of quantization basics is required.
 
 
 ## What is Quantization?
@@ -128,7 +128,7 @@ def quantize_tensor(
         tensor=quantized_tensor.to(torch.int8), scale=S, zero_point=Z
     )  # Return the quantized tensor, scale, and zero point
 ```
-This is the only required change to the implementation.
+This is the only required change to the implementation. In this implementation, we choose the clipping values manually, but in production cases, the clipping values are usually computed from the data distribution via different methods, such as `Percentile Clipping`, or even optimization methods such as minimizing the `KL Divergence` between the original and dequantized distribution. This process is called `Calibration`.
 
 ### Quantization Granularity
 
@@ -290,6 +290,11 @@ model = qat_quantizer.convert(model)
 # Now we can use the model for inference
 # ...
 ```
+
+## Tips and Tricks
+
+- **Finetuning:** finetuning the model with `QAT` is usually a better approach then training the model from scratch.
+- **Layers:** quantizing only some layers is a good approach, some layers are influenced more by the quantization process. Try experimenting with replacing only some layers. Good starting point is replacing the later layers. Also, in general it's not a good approach to quantize critical layers, such as attention layers. A good approach is to quantize the feed-forward layers, as those are the ones that require the most memory.
 
 ## Conclusion
 
