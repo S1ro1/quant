@@ -1,8 +1,7 @@
-# Quatization Aware Training
+# Quantization Aware Training
 
 In this tutorial, we will be looking at the concept of quantization aware training, how does it work in depth, its benefits and how to implement it in PyTorch. To properly understand
 this concept, proper understanding of quantization basics is required.
-
 
 ## What is Quantization?
 
@@ -10,7 +9,7 @@ Formally, quantization is the process of constraining an input from a continuous
 
 1) **Memory Reduction:**
     In the example of current LLMs, the weights of the feed-forward layers are quite large. Imagine a forward layer weight matrix in Llama 3 70B Model, the weight matrix could be of size
-    `8192 * 8192`. In case of 16-bit precision, this weight matrix would require `8192 * 8192 * 2 = 131072` bytes of memory. This is a lot of memory to store and process. In case we reduced
+    `8192 * 8192`. In case of 16-bit precision, this weight matrix would require `8192 * 8192 * 2 = 134,217,728` bytes of memory (approximately 128 MB). This is a lot of memory to store and process. In case we reduced
     the precision of the weights, we can reduce the load times from memory approximately two, four-fold respectively when using int8 and int4 data types.
 
 2) **Speedup:**
@@ -189,8 +188,9 @@ class FakeQuantizeFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(
-        ctx: torch.autograd.function.FunctionCtx, grad_output: torch.Tensor
-    ) -> Tuple[torch.Tensor]:
+        ctx: torch.autograd.function.FunctionCtx, 
+        grad_output: torch.Tensor
+    ) -> tuple[torch.Tensor]:
         (mask,) = ctx.saved_tensors
         return grad_output * mask
 ```
@@ -249,8 +249,7 @@ model = replace_layers_with_quantized(model)
 
 As you might have noticed, we have written quite a lot of code, which doesn't handle a lot of edge cases and is rather simple. We can use PyTorch's [AO](https://github.com/pytorch/ao) library to do this for us. This library provides a [QAT](https://github.com/pytorch/ao/tree/main/torchao/quantization/qat) module, which provides functionality for different quantization schemes.
 
-The examples shown were purely educational. In production, different quantization schemes are used to improve the performance of the model.
-` AO` currently provides 2 different quantization schemes (note the different granularities of quantization, as discussed in the [Quantization Granularity](#quantization-granularity) section), which are:
+The examples shown were purely educational. In production, different quantization schemes are used to improve the performance of the model. ` AO` currently provides 2 different quantization schemes (note the different granularities of quantization, as discussed in the [Quantization Granularity](#quantization-granularity) section), which are:
 1) **int8 per token dynamic activation quantization with int4 per group weight quantization:**
     This method quantizes weights to `int8` and activations to `int4`. Then, computation is done in original data type, that is `float16` usually. This is a good starting point for quantization aware training.
 
