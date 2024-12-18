@@ -245,7 +245,7 @@ model = replace_layers_with_quantized(model)
 # ...
 ```
 
-### How to do this in practice?
+## How to do this in practice?
 
 As you might have noticed, we have written quite a lot of code, which doesn't handle a lot of edge cases and is rather simple. We can use PyTorch's [AO](https://github.com/pytorch/ao) library to do this for us. This library provides a [QAT](https://github.com/pytorch/ao/tree/main/torchao/quantization/qat) module, which provides functionality to do this for us.
 
@@ -291,6 +291,9 @@ model = qat_quantizer.convert(model)
 # ...
 ```
 
+## Conclusion
+
+In this tutorial, we have looked at the concept of quantization aware training, how does it work in depth, its benefits and how to implement it from scratch in PyTorch, and how to use `Pytorch AO` to do this for us, which is a lot more efficient approach.
 
 
 
