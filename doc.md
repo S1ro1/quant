@@ -61,7 +61,7 @@ $$
 Z = \text{round}\left(Q_{min} - \frac{W_{min}}{S}\right) = \text{round}\left(-128 - \frac{W_{min}}{S}\right)
 $$
 
-### Pytorch Implementation
+###  Implementation
 
 ```python
 import torch
@@ -111,7 +111,7 @@ def quantize_tensor(
     tensor: torch.Tensor, clip_min: float | None = None, clip_max: float | None = None
 ) -> QTensor:
     if clip_min or clip_max: # check if atleast one of the clip values is provided
-        tensor = torch.clip(tensor, clip_min, clip_max)
+        tensor = torch.clamp(tensor, clip_min, clip_max)
 
     W_min = tensor.min()
     W_max = tensor.max()
@@ -151,7 +151,7 @@ It's easier to see this in a diagram:
 ![Quantization Aware Training](./media/QAT.png)
 *Figure 4: Visual representation of Quantization Aware Training. In this diagram, we can see that the weights are stored in the original data type, and are quantized and dequantized during the forward pass. This simulates the inference process, where the weights are loaded from memory and then dequantized. During the backward pass, we pass the gradient to the original weights, which are then updated.*
 
-### Pytorch Implementation
+###  Implementation
 To properly implement this, we would like to replace all of the `torch.nn.Linear` layers with our own custom implementation. This custom implementation would involve the following:
 
 - Quantizing the weights
@@ -250,7 +250,7 @@ model = replace_layers_with_quantized(model)
 As you might have noticed, we have written quite a lot of code, which doesn't handle a lot of edge cases and is rather simple. We can use PyTorch's [AO](https://github.com/pytorch/ao) library to do this for us. This library provides a [QAT](https://github.com/pytorch/ao/tree/main/torchao/quantization/qat) module, which provides functionality to do this for us.
 
 The examples shown were purely educational, and in production, different quantization schemes are used to improve the performance of the model.
-`Pytorch AO` currently provides 2 different quantization schemes, which are (also note the different granularities of quantization, as discussed in the [Quantization Granularity](#quantization-granularity) section):
+` AO` currently provides 2 different quantization schemes, which are (also note the different granularities of quantization, as discussed in the [Quantization Granularity](#quantization-granularity) section):
 1) **int8 per token dynamic activation quantization with int4 per group weight quantization:**
     This quantization quantizes weights to `int8` and activations to `int4`. Then, computation is done in original data type, that is `float16` usually. This is a good starting point for quantization aware training.
 
@@ -258,7 +258,7 @@ The examples shown were purely educational, and in production, different quantiz
     This quantization quantizes weights to `int4`, but keeps the activations in `float16`. Then, weights are dequantized `on the fly` during the `matmul` kernel call. This is just to optimize the latency and performance of the model.
 
 
-To reproduce our example with `Pytorch AO`, you can use the following code:
+To reproduce our example with ` AO`, you can use the following code:
 
 ```python
 import torch
@@ -281,7 +281,7 @@ model = qat_quantizer.prepare(model)
 # ...
 ```
 
-Recalling our example, we have replaced the `torch.nn.Linear` layers with our own custom implementation. This is done by the `qat_quantizer.prepare(model)` function. This function inserts the `FakeQuantizeFunction` into the linear layers, and replaces the original weights with the quantized weights. However, in case of inference, we do not want to do these steps, we would like to only dequantize the weights and compute, as the weights are already quantized when loaded from memory. We haven't implemented this in our example, but `Pytorch AO` provides a `qat_quantizer.convert(model)` function, which does this for us. To do this, we can use the following code:
+Recalling our example, we have replaced the `torch.nn.Linear` layers with our own custom implementation. This is done by the `qat_quantizer.prepare(model)` function. This function inserts the `FakeQuantizeFunction` into the linear layers, and replaces the original weights with the quantized weights. However, in case of inference, we do not want to do these steps, we would like to only dequantize the weights and compute, as the weights are already quantized when loaded from memory. We haven't implemented this in our example, but ` AO` provides a `qat_quantizer.convert(model)` function, which does this for us. To do this, we can use the following code:
 
 ```python
 # Convert the model to the quantized model
@@ -293,7 +293,7 @@ model = qat_quantizer.convert(model)
 
 ## Conclusion
 
-In this tutorial, we have looked at the concept of quantization aware training, how does it work in depth, its benefits and how to implement it from scratch in PyTorch, and how to use `Pytorch AO` to do this for us, which is a lot more efficient approach.
+In this tutorial, we have looked at the concept of quantization aware training, how does it work in depth, its benefits and how to implement it from scratch in PyTorch, and how to use ` AO` to do this for us, which is a lot more efficient approach.
 
 
 
