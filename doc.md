@@ -196,7 +196,7 @@ class FakeQuantizeFunction(torch.autograd.Function):
 ```
 
 This function is used to simulate the quantization process during training. Note the `mask` variable, this is used to store a boolean mask 
-of values that weren't clipped during the forward pass. Therefore, values that were clipped, their gradients are not updated in the backward pass. This helps simulate the inference process and stabilizes the training process.
+of values that weren't clipped during the forward pass. Therefore, values that were clipped are not updated in the backward pass. This helps simulate the inference process and stabilizes the training process.
 
 
 After this, we can create a `torch.nn.Module` that encapsulates the `FakeQuantizeFunction` and replace all of the `torch.nn.Linear` layers with this module. We can do this using a simple utility function.
