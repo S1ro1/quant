@@ -250,7 +250,7 @@ model = replace_layers_with_quantized(model)
 As you might have noticed, we have written quite a lot of code, which doesn't handle a lot of edge cases and is rather simple. We can use PyTorch's [AO](https://github.com/pytorch/ao) library to do this for us. This library provides a [QAT](https://github.com/pytorch/ao/tree/main/torchao/quantization/qat) module, which provides functionality to do this for us.
 
 The examples shown were purely educational, and in production, different quantization schemes are used to improve the performance of the model.
-` AO` currently provides 2 different quantization schemes, which are (also note the different granularities of quantization, as discussed in the [Quantization Granularity](#quantization-granularity) section):
+` AO` currently provides 2 different quantization schemes (note the different granularities of quantization, as discussed in the [Quantization Granularity](#quantization-granularity) section), which are:
 1) **int8 per token dynamic activation quantization with int4 per group weight quantization:**
     This quantization quantizes weights to `int8` and activations to `int4`. Then, computation is done in original data type, that is `float16` usually. This is a good starting point for quantization aware training.
 
