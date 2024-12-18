@@ -3,14 +3,15 @@
 In this tutorial, we will be looking at the concept of quantization aware training, how does it work in depth, its benefits and how to implement it in PyTorch. To properly understand
 this concept, proper understanding of quantization basics is required.
 
+
 ## What is Quantization?
 
 Formally, quantization is the process of constraining an input from a continuous or otherwise large set of values to a discrete set of values. You can think of it as a way to reduce the precision of the data. In neural networks, quantization is the process of reducing the precision of the weights and activations. This can be helpful in different ways.
 
 1) **Memory Reduction:**
     In the example of current LLMs, the weights of the feed-forward layers are quite large. Imagine a forward layer weight matrix in Llama 3 70B Model, the weight matrix could be of size
-    `8192 * 8192`. In case of 16-bit precision, this weight matrix would require `8192 * 8192 * 2 = 134,217,728` bytes of memory (approximately 128 MB). This is a lot of memory to store and process. In case we reduced
-    the precision of the weights, we can reduce the load times from memory approximately two, four-fold respectively when using int8 and int4 data types.
+    `8192 * 8192`. In case of `float16`, this weight matrix would require `8192 * 8192 * 2 = 134,217,728` bytes of memory (approximately 128 MB). This is a lot of memory to store and process, when we consider the fact that the model has multiple such layers. In case we reduced
+    the precision of the weights, we can reduce the load times from memory approximately two, four-fold respectively when using `int8` or `int4` data types.
 
 2) **Speedup:**
     Quantization can also help in speeding up the inference, sometimes even the training process. From computer architecture perspective, the operations on large data types, such as
